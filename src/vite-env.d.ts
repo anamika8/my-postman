@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly VITE_RETRIEVE_PATH?: string
   readonly VITE_SUGGEST_PROMPTS_PATH?: string
   readonly VITE_JIRA_URL?: string
+  readonly VITE_ENVIRONMENTS_URL?: string
   readonly VITE_USE_MOCKS?: string
 }
 

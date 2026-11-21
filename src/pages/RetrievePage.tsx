@@ -4,15 +4,12 @@ import type { HealthState, Workflow } from '../api/types'
 import { Icon } from '../components/Icon'
 import { JiraTicket } from '../components/JiraTicket'
 import { fillTemplate } from '../templates/fillTemplate'
-import savedEnvironments from '../environments.json'
 import envTicketTemplate from '../templates/new-environment-ticket-template.txt?raw'
 import { WorkflowQuickCheck } from '../components/WorkflowQuickCheck'
-import { useCopy } from '../hooks'
+import { useCopy, useEnvironments } from '../hooks'
 import { config } from '../config'
-import { looksLikeHost, toRequest, type RetrieveForm, type SavedEnvironment } from '../types'
+import { looksLikeHost, toRequest, type RetrieveForm } from '../types'
 import { ResultsView, type RetrieveOutcome } from './ResultsView'
-
-const ENVIRONMENTS: SavedEnvironment[] = savedEnvironments
 
 interface Props {
   form: RetrieveForm
@@ -26,6 +23,8 @@ export function RetrievePage({ form, setForm, health, workflows }: Props) {
   const [outcome, setOutcome] = useState<RetrieveOutcome | null>(null)
   const [touched, setTouched] = useState(false)
   const [envTicket, setEnvTicket] = useState<string | null>(null)
+  const envs = useEnvironments()
+  const ENVIRONMENTS = envs.environments
   const { copied, copy } = useCopy()
 
   const body = useMemo(() => toRequest(form), [form])
@@ -185,19 +184,44 @@ export function RetrievePage({ form, setForm, health, workflows }: Props) {
             <div className="env-pick">
               <div className="field">
                 <label htmlFor="envPreset">Saved environment</label>
-                <select id="envPreset" value={form.envId ?? ''} onChange={(e) => pickEnvironment(e.target.value)}>
-                  <option value="">Enter manually</option>
-                  {ENVIRONMENTS.map((env) => (
-                    <option key={env.id} value={env.id}>
-                      {env.name} ({env.customerName})
-                    </option>
-                  ))}
-                </select>
+                <div className="select-row">
+                  <select
+                    id="envPreset"
+                    value={chosenEnv ? form.envId : ''}
+                    onChange={(e) => pickEnvironment(e.target.value)}
+                    aria-busy={envs.loading || undefined}
+                  >
+                    <option value="">{envs.loading && !ENVIRONMENTS.length ? 'Loading…' : 'Enter manually'}</option>
+                    {ENVIRONMENTS.map((env) => (
+                      <option key={env.id} value={env.id}>
+                        {env.name} ({env.customerName})
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="icon-btn icon-btn-outline"
+                    onClick={() => void envs.reload()}
+                    disabled={envs.loading}
+                    aria-label="Refresh saved environments"
+                    title={
+                      envs.loadedAt
+                        ? `Refresh saved environments (last loaded ${envs.loadedAt.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })})`
+                        : 'Refresh saved environments'
+                    }
+                  >
+                    <Icon name="refresh" size={18} className={envs.loading ? 'spin' : undefined} />
+                  </button>
+                </div>
               </div>
               <p className="hint env-pick-hint">
-                {chosenEnv
-                  ? 'Values filled in from the saved environment. Change any of them to enter your own.'
-                  : 'Pick a saved environment, or type the values below.'}{' '}
+                {envs.error ? (
+                  <span className="error-text">{envs.error} You can still type the values below.</span>
+                ) : chosenEnv ? (
+                  'Values filled in from the saved environment. Change any of them to enter your own.'
+                ) : (
+                  `Pick one of ${ENVIRONMENTS.length} saved environments, or type the values below.`
+                )}{' '}
                 Missing one?{' '}
                 <button type="button" className="inline-link" onClick={openEnvTicket}>
                   Request a new saved environment

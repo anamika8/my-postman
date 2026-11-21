@@ -1235,3 +1235,11 @@ textarea:focus {
 select {
   cursor: pointer;
 }
+.select-row {
+  display: flex;
+  gap: 8px;
+}
+.select-row select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
