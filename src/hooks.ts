@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { checkHealth, fetchWorkflows } from './api/client'
+import { checkHealth, fetchEnvironments, fetchWorkflows } from './api/client'
 import type { HealthState, Workflow } from './api/types'
 import { config } from './config'
+import type { SavedEnvironment } from './types'
 
 export function useHealth() {
   const [state, setState] = useState<HealthState>('unknown')
@@ -87,4 +88,30 @@ export function usePersistentState<T>(key: string, initial: T) {
     }
   }, [key, value])
   return [value, setValue] as const
+}
+
+export function useEnvironments() {
+  const [environments, setEnvironments] = useState<SavedEnvironment[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [loadedAt, setLoadedAt] = useState<Date | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      setEnvironments(await fetchEnvironments())
+      setLoadedAt(new Date())
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void load()
+  }, [load])
+
+  return { environments, loading, error, loadedAt, reload: load }
 }

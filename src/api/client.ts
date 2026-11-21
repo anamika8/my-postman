@@ -1,5 +1,6 @@
 import { apiUrl, config } from '../config'
 import { mockFetch } from './mock'
+import type { SavedEnvironment } from '../types'
 import type { ApiResult, RetrieveRequest, Workflow } from './types'
 
 export class ApiError extends Error {
@@ -115,4 +116,23 @@ export async function suggestPrompts(requirement: string): Promise<string[]> {
     body: JSON.stringify({ requirement }),
   })
   return normalizeSuggestions(res.data)
+}
+
+/** Loads the saved environments list, skipping the browser cache so Refresh always gets the latest. */
+export async function fetchEnvironments(): Promise<SavedEnvironment[]> {
+  let res: Response
+  try {
+    res = await fetch(config.environmentsUrl, { cache: 'no-store', headers: { Accept: 'application/json' } })
+  } catch {
+    throw new Error("Couldn't reach the saved environments list.")
+  }
+  if (!res.ok) throw new Error(`Couldn't load saved environments (${res.status}).`)
+  const raw: unknown = await res.json()
+  const list = Array.isArray(raw) ? raw : ((raw as Record<string, unknown>)?.environments ?? [])
+  if (!Array.isArray(list)) return []
+  return list.filter(
+    (e): e is SavedEnvironment =>
+      !!e && typeof e.id === 'string' && typeof e.name === 'string' &&
+      typeof e.apiHostIp === 'string' && typeof e.targetServerIp === 'string' && typeof e.customerName === 'string',
+  )
 }
