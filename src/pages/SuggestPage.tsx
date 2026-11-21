@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { suggestPrompts } from '../api/client'
 import { Icon } from '../components/Icon'
-import { config } from '../config'
+import { JiraTicket } from '../components/JiraTicket'
+import { fillTemplate } from '../templates/fillTemplate'
 import { useCopy } from '../hooks'
 import jiraTemplate from '../templates/jira-ticket-template.txt?raw'
 import type { RetrieveForm } from '../types'
@@ -11,10 +12,6 @@ type Status = 'idle' | 'loading' | 'found' | 'none' | 'error'
 interface Props {
   form: RetrieveForm
   onUsePrompts: (prompts: string[]) => void
-}
-
-function fillTemplate(template: string, values: Record<string, string>) {
-  return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k: string) => values[k] || `<${k.replace(/_/g, ' ')}>`)
 }
 
 export function SuggestPage({ form, onUsePrompts }: Props) {
@@ -52,7 +49,6 @@ export function SuggestPage({ form, onUsePrompts }: Props) {
   const openTicket = () => {
     setTicket(buildTicket(need))
     setTicketOpen(true)
-    setTimeout(() => document.getElementById('ticket')?.focus(), 0)
   }
 
   return (
@@ -200,39 +196,7 @@ export function SuggestPage({ form, onUsePrompts }: Props) {
           </section>
         )}
 
-        {ticketOpen && (
-          <section aria-labelledby="ticketHead" className="card card-flush mt-20">
-            <div className="ticket-head">
-              <div>
-                <h2 id="ticketHead" className="h-small">
-                  Your Jira ticket
-                </h2>
-                <p className="hint">Filled in from the team's ticket template. Check it, then copy it into Jira.</p>
-              </div>
-              <button type="button" className="icon-btn" aria-label="Close ticket" onClick={() => setTicketOpen(false)}>
-                <Icon name="x" size={18} strokeWidth={1.8} />
-              </button>
-            </div>
-            <div className="ticket-body">
-              <label htmlFor="ticket" className="sr-only">
-                Ticket text
-              </label>
-              <textarea id="ticket" rows={14} className="ticket-text" value={ticket} onChange={(e) => setTicket(e.target.value)} />
-              <div className="form-actions start">
-                <button type="button" className="btn btn-primary btn-lg" onClick={() => void copy(ticket, 'ticket')}>
-                  <Icon name="copy" size={16} strokeWidth={1.8} />
-                  {copied === 'ticket' ? 'Copied' : 'Copy ticket text'}
-                </button>
-                {config.jiraUrl && (
-                  <a className="btn btn-secondary btn-lg" href={config.jiraUrl} target="_blank" rel="noreferrer">
-                    Open Jira
-                    <Icon name="external" size={15} />
-                  </a>
-                )}
-              </div>
-            </div>
-          </section>
-        )}
+        {ticketOpen && <JiraTicket key={ticket} initialText={ticket} onClose={() => setTicketOpen(false)} />}
       </div>
     </main>
   )

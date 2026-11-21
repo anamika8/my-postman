@@ -6,6 +6,8 @@ export interface PromptField {
 }
 
 export interface RetrieveForm {
+  /** Id of the chosen saved environment, or '' when the values were typed in by hand. */
+  envId: string
   app: string
   testCaseId: string
   apiHost: string
@@ -16,6 +18,7 @@ export interface RetrieveForm {
 }
 
 export const emptyForm: RetrieveForm = {
+  envId: '',
   app: '',
   testCaseId: '',
   apiHost: '',
@@ -48,4 +51,12 @@ export function looksLikeHost(v: string): boolean {
   const host = s.replace(/:\d+$/, '')
   if (/^[\d.]+$/.test(host)) return IPV4.test(host)
   return IPV4.test(host) || /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i.test(host)
+}
+
+export interface SavedEnvironment {
+  id: string
+  name: string
+  apiHostIp: string
+  targetServerIp: string
+  customerName: string
 }
