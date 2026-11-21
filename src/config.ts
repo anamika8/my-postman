@@ -13,6 +13,8 @@ export const config = {
     suggestPrompts: env.VITE_SUGGEST_PROMPTS_PATH || '/suggest-prompts',
   },
   jiraUrl: env.VITE_JIRA_URL || '',
+  /** Where the saved environments list is loaded from. A static file by default; can be any URL returning the same JSON. */
+  environmentsUrl: env.VITE_ENVIRONMENTS_URL || '/environments.json',
   useMocks: env.VITE_USE_MOCKS === 'true',
   /** How often the header re-checks health in the background (ms). 0 turns it off. */
   healthPollMs: 60_000,

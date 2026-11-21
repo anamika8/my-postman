@@ -37,6 +37,7 @@ All settings are Vite env vars (see [`.env.example`](.env.example)):
 | `VITE_RETRIEVE_PATH` | `/retrieve` | |
 | `VITE_SUGGEST_PROMPTS_PATH` | `/suggest-prompts` | |
 | `VITE_JIRA_URL` | *(none)* | Shows an **Open Jira** button next to the ticket text |
+| `VITE_ENVIRONMENTS_URL` | `/environments.json` | Where the saved environments list is loaded from (a static file or an API URL returning the same JSON) |
 | `VITE_USE_MOCKS` | `false` | Use built-in sample responses |
 | `TDAAS_PROXY_TARGET` | *(none)* | Dev server only: proxy the API paths to this backend to avoid CORS |
 
@@ -44,7 +45,11 @@ If the UI is served from a different origin than the API in production, the API 
 
 ## Saved environments
 
-The **Saved environment** drop-down on the Retrieve page is filled from [`src/environments.json`](src/environments.json). Each entry has `id`, `name`, `apiHostIp`, `targetServerIp` and `customerName`. The two entries there now are samples: replace them with real ones. Choosing an environment fills in the three fields; editing any of them switches the drop-down back to **Enter manually**. Rebuild after changing the file.
+The **Saved environment** drop-down on the Retrieve page is loaded when the page opens from [`public/environments.json`](public/environments.json) (or from `VITE_ENVIRONMENTS_URL` if set). Each entry has `id`, `name`, `apiHostIp`, `targetServerIp` and `customerName`; the file may also be `{ "environments": [...] }`. The two entries there now are samples: replace them with real ones.
+
+Choosing an environment fills in the three fields; editing any of them switches the drop-down back to **Enter manually**.
+
+When the TDaaS team adds an environment for a Jira request, they update that file (or the URL behind `VITE_ENVIRONMENTS_URL`); no rebuild is needed. Users press the **refresh** button next to the drop-down to load the latest list without reloading the page. If the list can't be loaded, users can still type the values by hand.
 
 ## Jira ticket templates
 
