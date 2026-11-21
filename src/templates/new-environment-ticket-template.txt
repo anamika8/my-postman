@@ -1,0 +1,24 @@
+Summary: [TDaaS] Add a saved environment: {{environment_name}}
+
+Issue type: Story
+Component: TDaaS
+
+Description
+-----------
+Please add this environment to the saved environments list in the TDaaS portal.
+
+Environment name: {{environment_name}}
+API host IP: {{api_host_ip}}
+Target server IP: {{target_server_ip}}
+Customer name: {{customer_name}}
+Application(s) that use it: {{application_name}}
+
+Why it's needed:
+<add details>
+
+Acceptance criteria
+-------------------
+- The environment appears in the "Saved environment" drop-down on the Retrieve page
+- Choosing it fills in the API host IP, target server IP and customer name
+
+Requested from the TDaaS portal on {{date}}

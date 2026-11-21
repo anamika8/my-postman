@@ -2,11 +2,17 @@ import { useMemo, useState } from 'react'
 import { ApiError, retrieve } from '../api/client'
 import type { HealthState, Workflow } from '../api/types'
 import { Icon } from '../components/Icon'
+import { JiraTicket } from '../components/JiraTicket'
+import { fillTemplate } from '../templates/fillTemplate'
+import savedEnvironments from '../environments.json'
+import envTicketTemplate from '../templates/new-environment-ticket-template.txt?raw'
 import { WorkflowQuickCheck } from '../components/WorkflowQuickCheck'
 import { useCopy } from '../hooks'
 import { config } from '../config'
-import { looksLikeHost, toRequest, type RetrieveForm } from '../types'
+import { looksLikeHost, toRequest, type RetrieveForm, type SavedEnvironment } from '../types'
 import { ResultsView, type RetrieveOutcome } from './ResultsView'
+
+const ENVIRONMENTS: SavedEnvironment[] = savedEnvironments
 
 interface Props {
   form: RetrieveForm
@@ -19,12 +25,35 @@ export function RetrievePage({ form, setForm, health, workflows }: Props) {
   const [sending, setSending] = useState(false)
   const [outcome, setOutcome] = useState<RetrieveOutcome | null>(null)
   const [touched, setTouched] = useState(false)
+  const [envTicket, setEnvTicket] = useState<string | null>(null)
   const { copied, copy } = useCopy()
 
   const body = useMemo(() => toRequest(form), [form])
   const payload = JSON.stringify(body, null, 2)
 
   const set = <K extends keyof RetrieveForm>(k: K, v: RetrieveForm[K]) => setForm((f) => ({ ...f, [k]: v }))
+  /** Editing an environment field by hand turns the selection into "Enter manually". */
+  const setEnvField = (k: 'apiHost' | 'targetIp' | 'customer', v: string) => setForm((f) => ({ ...f, [k]: v, envId: '' }))
+  const chosenEnv = ENVIRONMENTS.find((e) => e.id === form.envId)
+  const pickEnvironment = (id: string) => {
+    const env = ENVIRONMENTS.find((e) => e.id === id)
+    setForm((f) =>
+      env
+        ? { ...f, envId: env.id, apiHost: env.apiHostIp, targetIp: env.targetServerIp, customer: env.customerName }
+        : { ...f, envId: '' },
+    )
+  }
+  const openEnvTicket = () =>
+    setEnvTicket(
+      fillTemplate(envTicketTemplate, {
+        environment_name: '',
+        api_host_ip: chosenEnv ? '' : form.apiHost.trim(),
+        target_server_ip: chosenEnv ? '' : form.targetIp.trim(),
+        customer_name: chosenEnv ? '' : form.customer.trim(),
+        application_name: form.app.trim(),
+        date: new Date().toLocaleDateString(),
+      }),
+    )
 
   const hostBad = form.apiHost.trim() !== '' && !looksLikeHost(form.apiHost)
   const targetBad = form.targetIp.trim() !== '' && !looksLikeHost(form.targetIp)
@@ -33,7 +62,10 @@ export function RetrievePage({ form, setForm, health, workflows }: Props) {
     { label: 'Application name', ok: body.application_name !== '' },
     { label: 'Test case ID', ok: body.test_case_id !== '' },
     { label: 'Environment details', ok: envOk },
-    { label: body.prompts.length === 1 ? '1 prompt' : `${body.prompts.length} prompts`, ok: body.prompts.length > 0 },
+    {
+      label: body.prompts.length === 0 ? 'At least 1 prompt' : body.prompts.length === 1 ? '1 prompt' : `${body.prompts.length} prompts`,
+      ok: body.prompts.length > 0,
+    },
   ]
   const ready = checks.every((c) => c.ok)
 
@@ -150,6 +182,28 @@ export function RetrievePage({ form, setForm, health, workflows }: Props) {
               <span className="step-num">2</span>
               <h2 id="envHead">Environment</h2>
             </div>
+            <div className="env-pick">
+              <div className="field">
+                <label htmlFor="envPreset">Saved environment</label>
+                <select id="envPreset" value={form.envId ?? ''} onChange={(e) => pickEnvironment(e.target.value)}>
+                  <option value="">Enter manually</option>
+                  {ENVIRONMENTS.map((env) => (
+                    <option key={env.id} value={env.id}>
+                      {env.name} ({env.customerName})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="hint env-pick-hint">
+                {chosenEnv
+                  ? 'Values filled in from the saved environment. Change any of them to enter your own.'
+                  : 'Pick a saved environment, or type the values below.'}{' '}
+                Missing one?{' '}
+                <button type="button" className="inline-link" onClick={openEnvTicket}>
+                  Request a new saved environment
+                </button>
+              </p>
+            </div>
             <div className="grid grid-200">
               <div className="field">
                 <label htmlFor="apiHost">
@@ -159,7 +213,7 @@ export function RetrievePage({ form, setForm, health, workflows }: Props) {
                   id="apiHost"
                   className="mono"
                   value={form.apiHost}
-                  onChange={(e) => set('apiHost', e.target.value)}
+                  onChange={(e) => setEnvField('apiHost', e.target.value)}
                   placeholder="10.0.0.1"
                   inputMode="url"
                   autoComplete="off"
@@ -181,7 +235,7 @@ export function RetrievePage({ form, setForm, health, workflows }: Props) {
                   id="targetIp"
                   className="mono"
                   value={form.targetIp}
-                  onChange={(e) => set('targetIp', e.target.value)}
+                  onChange={(e) => setEnvField('targetIp', e.target.value)}
                   placeholder="10.0.0.2"
                   inputMode="url"
                   autoComplete="off"
@@ -202,13 +256,21 @@ export function RetrievePage({ form, setForm, health, workflows }: Props) {
                 <input
                   id="customer"
                   value={form.customer}
-                  onChange={(e) => set('customer', e.target.value)}
+                  onChange={(e) => setEnvField('customer', e.target.value)}
                   placeholder="e.g. Acme Insurance"
                   aria-invalid={req(form.customer.trim() !== '') ? true : undefined}
                   required
                 />
               </div>
             </div>
+            {envTicket !== null && (
+              <JiraTicket
+                key={envTicket}
+                title="Request a new saved environment"
+                initialText={envTicket}
+                onClose={() => setEnvTicket(null)}
+              />
+            )}
           </section>
 
           <section className="card" aria-labelledby="promptHead">

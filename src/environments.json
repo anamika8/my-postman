@@ -1,0 +1,16 @@
+[
+  {
+    "id": "qa1",
+    "name": "QA 1",
+    "apiHostIp": "10.20.4.15",
+    "targetServerIp": "10.20.8.42",
+    "customerName": "Acme Insurance"
+  },
+  {
+    "id": "uat-east",
+    "name": "UAT East",
+    "apiHostIp": "10.30.2.11",
+    "targetServerIp": "10.30.6.20",
+    "customerName": "Globex Health"
+  }
+]
