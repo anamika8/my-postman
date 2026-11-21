@@ -1,0 +1,24 @@
+Summary: [TDaaS] New test data request
+
+Issue type: Story
+Component: TDaaS
+
+Description
+-----------
+Data requirement (as described by the requester):
+{{requirement}}
+
+Application: {{application_name}}
+Test case ID: {{test_case_id}}
+Customer: {{customer_name}}
+Needed by: <date>
+
+Why the existing prompts don't cover it:
+<add details>
+
+Acceptance criteria
+-------------------
+- TDaaS can create the data described above from a prompt
+- The prompt is added to the suggested prompts list
+
+Requested from the TDaaS portal on {{date}}
